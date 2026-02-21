@@ -37,7 +37,7 @@ export const useSpeechRecognition = () => {
     recognition.onerror = (event: Event) => {
       // It's good practice to log the specific error if possible
       // For simplicity, we can cast the event to 'any' to access the 'error' property
-      const errorEvent = event as any;
+      const errorEvent = event as Event & { error: string };
       console.error("Speech recognition error", errorEvent.error);
       setIsListening(false);
     };

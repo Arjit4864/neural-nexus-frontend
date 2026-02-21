@@ -62,9 +62,10 @@ export default function PracticePage() {
         throw new Error(data.error || "An error occurred on the server.");
       }
       setFeedback(data.feedback);
-    } catch (error: any) {
+   } catch (error: unknown) {
       console.error("Failed to get AI feedback:", error);
-      setFeedback(`Error: ${error.message}. Check the backend terminal for details.`);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      setFeedback(`Error: ${errorMessage}. Check the backend terminal for details.`);
     } finally {
       setIsLoadingFeedback(false);
     }

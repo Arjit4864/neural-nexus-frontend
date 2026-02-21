@@ -54,7 +54,7 @@ export default function DashboardPage() {
       const data = await response.json();
       setMessage(data.message || 'Sync complete!');
       setTimeout(fetchInterviews, 2000); 
-    } catch (error) {
+    } catch {
       setMessage('An error occurred during sync.');
     }
   };
