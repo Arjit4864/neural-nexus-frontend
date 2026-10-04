@@ -68,23 +68,37 @@ export default function DashboardPage() {
           <h1 className="bg-gradient-to-br from-white to-gray-400 bg-clip-text text-3xl font-bold text-transparent">
             Command Center
           </h1>
-          <motion.button 
-            onClick={handleSync} 
-            className="rounded-full bg-white/10 px-6 py-2 font-semibold text-white shadow-md transition-colors hover:bg-white/20"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            Sync Emails
-          </motion.button>
-          <Link href="/dashboard/practice">
-  <motion.button 
-    className="rounded-full bg-purple-500/80 px-6 py-2 font-semibold text-white shadow-md transition-colors hover:bg-purple-500/100"
-    whileHover={{ scale: 1.05 }}
-    whileTap={{ scale: 0.95 }}
-  >
-    Start Mock Interview
-  </motion.button>
-</Link>
+          <div className="flex flex-wrap items-center gap-3">
+            <motion.button 
+              onClick={handleSync} 
+              className="rounded-full bg-white/10 px-6 py-2 font-semibold text-white shadow-md transition-colors hover:bg-white/20"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              Sync Emails
+            </motion.button>
+            
+            {/* NEW: Live Pipeline Button added to header */}
+            <Link href="/dashboard/pipeline">
+              <motion.button 
+                className="rounded-full bg-indigo-600/80 px-6 py-2 font-semibold text-white shadow-md transition-colors hover:bg-indigo-600/100"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                View Live Pipeline
+              </motion.button>
+            </Link>
+
+            <Link href="/dashboard/practice">
+              <motion.button 
+                className="rounded-full bg-purple-500/80 px-6 py-2 font-semibold text-white shadow-md transition-colors hover:bg-purple-500/100"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                Start Mock Interview
+              </motion.button>
+            </Link>
+          </div>
         </header>
         
         {message && <p className="my-4 rounded-md bg-black/20 p-3 text-center text-sm text-cyan-300">{message}</p>}
@@ -119,7 +133,15 @@ export default function DashboardPage() {
                     </motion.div>
                   ))}
                 </AnimatePresence>
-              ) : <p className="text-slate-400">No interviews found. Try syncing your emails.</p>}
+              ) : (
+                <div className="space-y-3">
+                  <p className="text-slate-400">No interviews found. Try syncing your emails.</p>
+                  {/* NEW: Pipeline link added to empty state */}
+                  <Link href="/dashboard/pipeline" className="inline-block text-cyan-400 hover:text-cyan-300 text-sm font-medium transition-colors">
+                    Check the Live Pipeline instead &rarr;
+                  </Link>
+                </div>
+              )}
             </div>
           </motion.div>
 
