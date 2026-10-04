@@ -124,11 +124,15 @@ function PracticeSimulator() {
         
         <motion.div className="mt-8 rounded-2xl border border-white/10 bg-black/20 p-6 text-center min-h-[150px] flex flex-col justify-center">
           {isGenerating ? (
-            <div className="animate-pulse space-y-4">
-              <div className="h-4 bg-white/20 rounded w-1/4 mx-auto"></div>
-              <div className="h-6 bg-cyan-900/50 rounded w-3/4 mx-auto"></div>
-              <p className="text-sm text-cyan-400 mt-2">Generating personalized technical questions...</p>
-            </div>
+            <>
+              <p className="text-slate-400">System Initializing</p>
+              <p className="mt-2 text-2xl font-semibold text-cyan-300">Generating personalized technical questions...</p>
+              {(role && role !== "Unknown") && (
+                <span className="mt-4 inline-block px-3 py-1 bg-indigo-500/10 text-indigo-300/50 text-xs font-medium rounded-full border border-indigo-500/20">
+                  Target: {role} @ {company}
+                </span>
+              )}
+            </>
           ) : (
             <>
               <p className="text-slate-400">Question {currentQuestionIndex + 1} of {questions.length}</p>
@@ -211,7 +215,7 @@ export default function PracticePage() {
   return (
     <Suspense fallback={
       <div className="min-h-screen p-4 sm:p-6 md:p-8 flex items-center justify-center">
-        <div className="text-cyan-400 text-xl font-semibold animate-pulse">Initializing Simulator...</div>
+        <div className="text-cyan-400 text-xl font-semibold">Initializing Simulator...</div>
       </div>
     }>
       <PracticeSimulator />
