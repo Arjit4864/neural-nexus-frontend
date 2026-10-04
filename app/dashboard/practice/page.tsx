@@ -3,23 +3,62 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useSpeechRecognition } from '../../hooks/useSpeechRecognition';
 import Link from 'next/link';
-
-const mockQuestions = [
-  "Tell me about a time you faced a difficult challenge at work.",
-  "Where do you see yourself in five years?",
-  "What is your biggest weakness?",
-  "Why should we hire you?"
-];
+import { useSearchParams } from 'next/navigation';
 
 export default function PracticePage() {
+  const searchParams = useSearchParams();
+  const company = searchParams.get('company');
+  const role = searchParams.get('role');
+  const interviewType = searchParams.get('type');
+
+  const [questions, setQuestions] = useState<string[]>([]);
+  const [isGenerating, setIsGenerating] = useState(true);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [feedback, setFeedback] = useState('');
   const [isLoadingFeedback, setIsLoadingFeedback] = useState(false);
   const { transcript, isListening, startListening, stopListening, setTranscript } = useSpeechRecognition();
 
   useEffect(() => {
-    speakQuestion(mockQuestions[0]);
-  }, []);
+    const fetchQuestions = async () => {
+      setIsGenerating(true);
+      try {
+        const response = await fetch('https://neural-nexus-backend-4qh8.onrender.com/interviews/generate-question', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            company: company || "Unknown",
+            role: role || "Unknown",
+            interview_type: interviewType || "Unknown"
+          })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok && data.questions && data.questions.length > 0) {
+          setQuestions(data.questions);
+          speakQuestion(data.questions[0]);
+        } else {
+          throw new Error(data.error || "Failed to load questions");
+        }
+      } catch (error) {
+        console.error("Failed to fetch custom questions:", error);
+        // Fallback to static questions if the AI fails
+        const fallback = [
+          "Tell me about a time you faced a difficult challenge at work.",
+          "Where do you see yourself in five years?",
+          "What is your biggest weakness?",
+          "Why should we hire you?",
+          "Describe a time you showed leadership."
+        ];
+        setQuestions(fallback);
+        speakQuestion(fallback[0]);
+      } finally {
+        setIsGenerating(false);
+      }
+    };
+
+    fetchQuestions();
+  }, [company, role, interviewType]);
 
   const speakQuestion = (text: string) => {
     if (typeof window !== 'undefined' && window.speechSynthesis) {
@@ -33,9 +72,9 @@ export default function PracticePage() {
     stopListening();
     setFeedback('');
     setTranscript('');
-    const nextIndex = (currentQuestionIndex + 1) % mockQuestions.length;
+    const nextIndex = (currentQuestionIndex + 1) % questions.length;
     setCurrentQuestionIndex(nextIndex);
-    speakQuestion(mockQuestions[nextIndex]);
+    speakQuestion(questions[nextIndex]);
   };
 
   const getAIFeedback = async () => {
@@ -53,7 +92,7 @@ export default function PracticePage() {
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({
-          question: mockQuestions[currentQuestionIndex],
+          question: questions[currentQuestionIndex],
           answer: transcript,
         }),
       });
@@ -78,14 +117,29 @@ export default function PracticePage() {
           <h1 className="bg-gradient-to-br from-white to-gray-400 bg-clip-text text-3xl font-bold text-transparent">
             Mock Interview Simulator
           </h1>
-          <Link href="/dashboard" className="rounded-full bg-white/10 px-6 py-2 text-sm font-semibold text-white shadow-md transition-colors hover:bg-white/20">
-            Back to Dashboard
+          <Link href="/dashboard/pipeline" className="rounded-full bg-white/10 px-6 py-2 text-sm font-semibold text-white shadow-md transition-colors hover:bg-white/20">
+            Back to Pipeline
           </Link>
         </div>
         
-        <motion.div className="mt-8 rounded-2xl border border-white/10 bg-black/20 p-6 text-center">
-          <p className="text-slate-400">Question {currentQuestionIndex + 1} of {mockQuestions.length}</p>
-          <p className="mt-2 text-2xl font-semibold text-cyan-300">{mockQuestions[currentQuestionIndex]}</p>
+        <motion.div className="mt-8 rounded-2xl border border-white/10 bg-black/20 p-6 text-center min-h-[150px] flex flex-col justify-center">
+          {isGenerating ? (
+            <div className="animate-pulse space-y-4">
+              <div className="h-4 bg-white/20 rounded w-1/4 mx-auto"></div>
+              <div className="h-6 bg-cyan-900/50 rounded w-3/4 mx-auto"></div>
+              <p className="text-sm text-cyan-400 mt-2">Generating personalized technical questions...</p>
+            </div>
+          ) : (
+            <>
+              <p className="text-slate-400">Question {currentQuestionIndex + 1} of {questions.length}</p>
+              <p className="mt-2 text-2xl font-semibold text-cyan-300">{questions[currentQuestionIndex]}</p>
+              {(role && role !== "Unknown") && (
+                <span className="mt-4 inline-block px-3 py-1 bg-indigo-500/20 text-indigo-300 text-xs font-medium rounded-full border border-indigo-500/30">
+                  Target: {role} @ {company}
+                </span>
+              )}
+            </>
+          )}
         </motion.div>
 
         <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
@@ -93,26 +147,35 @@ export default function PracticePage() {
           <div className="flex flex-col space-y-4">
             <button 
               onClick={isListening ? stopListening : startListening} 
+              disabled={isGenerating}
               className={`w-full rounded-full p-4 text-lg font-bold transition-colors duration-200 
                 ${isListening 
                   ? 'bg-red-600 hover:bg-red-700' 
                   : 'bg-green-600 hover:bg-green-700'
-                }`}
+                } disabled:opacity-50 disabled:cursor-not-allowed`}
             >
               {isListening ? 'Stop Recording' : 'Record Answer'}
             </button>
             <button 
               onClick={getAIFeedback} 
-              disabled={isListening || isLoadingFeedback} 
+              disabled={isListening || isLoadingFeedback || isGenerating} 
               className="w-full rounded-full bg-purple-500/80 p-4 text-lg font-semibold transition hover:bg-purple-500/100 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isLoadingFeedback ? 'Analyzing...' : 'Get AI Feedback'}
             </button>
             <div className="flex gap-4">
-              <button onClick={() => speakQuestion(mockQuestions[currentQuestionIndex])} className="flex-1 rounded-full bg-white/10 p-3 font-semibold transition hover:bg-white/20">
+              <button 
+                onClick={() => speakQuestion(questions[currentQuestionIndex])} 
+                disabled={isGenerating}
+                className="flex-1 rounded-full bg-white/10 p-3 font-semibold transition hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
                 Repeat Question
               </button>
-              <button onClick={handleNextQuestion} className="flex-1 rounded-full bg-white/10 p-3 font-semibold transition hover:bg-white/20">
+              <button 
+                onClick={handleNextQuestion} 
+                disabled={isGenerating}
+                className="flex-1 rounded-full bg-white/10 p-3 font-semibold transition hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
                 Next Question
               </button>
             </div>
