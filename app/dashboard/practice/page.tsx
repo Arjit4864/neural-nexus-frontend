@@ -1,206 +1,207 @@
 "use client";
-import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { useSpeechRecognition } from '../../hooks/useSpeechRecognition';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 
-export default function PracticePage() {
-  const searchParams = useSearchParams();
-  const company = searchParams.get('company');
-  const role = searchParams.get('role');
-  const interviewType = searchParams.get('type');
+type Candidate = {
+  id: number;
+  role_title: string;
+  company: string;
+  interview_date: string;
+  interview_time: string;
+  interview_type: string;
+};
 
-  const [questions, setQuestions] = useState<string[]>([]);
-  const [isGenerating, setIsGenerating] = useState(true);
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [feedback, setFeedback] = useState('');
-  const [isLoadingFeedback, setIsLoadingFeedback] = useState(false);
-  const { transcript, isListening, startListening, stopListening, setTranscript } = useSpeechRecognition();
+const getMostCommonType = (candidates: Candidate[]) => {
+  if (candidates.length === 0) return "N/A";
+  const counts = candidates.reduce((acc, { interview_type }) => {
+    // Ignore 'Unknown' when calculating the most common type
+    if (interview_type !== 'Unknown') {
+      acc[interview_type] = (acc[interview_type] || 0) + 1;
+    }
+    return acc;
+  }, {} as Record<string, number>);
+  
+  const keys = Object.keys(counts);
+  if (keys.length === 0) return "N/A";
+  return keys.reduce((a, b) => counts[a] > counts[b] ? a : b);
+};
+
+export default function DashboardPage() {
+  const [candidates, setCandidates] = useState<Candidate[]>([]);
+  const [message, setMessage] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Fetch from the new staffing pipeline backend connected to Neon
+  const fetchInterviews = async () => {
+    setIsLoading(true);
+    try {
+      const response = await fetch('https://staffing-pipeline-backend.onrender.com/api/candidates');
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          setCandidates(data.data);
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching pipeline data:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchQuestions = async () => {
-      setIsGenerating(true);
-      try {
-        const response = await fetch('https://neural-nexus-backend-4qh8.onrender.com/interviews/generate-question', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            company: company || "Unknown",
-            role: role || "Unknown",
-            interview_type: interviewType || "Unknown"
-          })
-        });
-        
-        const data = await response.json();
-        
-        if (response.ok && data.questions && data.questions.length > 0) {
-          setQuestions(data.questions);
-          speakQuestion(data.questions[0]);
-        } else {
-          throw new Error(data.error || "Failed to load questions");
-        }
-      } catch (error) {
-        console.error("Failed to fetch custom questions:", error);
-        // Fallback to static questions if the AI fails
-        const fallback = [
-          "Tell me about a time you faced a difficult challenge at work.",
-          "Where do you see yourself in five years?",
-          "What is your biggest weakness?",
-          "Why should we hire you?",
-          "Describe a time you showed leadership."
-        ];
-        setQuestions(fallback);
-        speakQuestion(fallback[0]);
-      } finally {
-        setIsGenerating(false);
-      }
-    };
+    fetchInterviews();
+  }, []);
 
-    fetchQuestions();
-  }, [company, role, interviewType]);
-
-  const speakQuestion = (text: string) => {
-    if (typeof window !== 'undefined' && window.speechSynthesis) {
-      window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(text);
-      window.speechSynthesis.speak(utterance);
-    }
-  };
-  
-  const handleNextQuestion = () => {
-    stopListening();
-    setFeedback('');
-    setTranscript('');
-    const nextIndex = (currentQuestionIndex + 1) % questions.length;
-    setCurrentQuestionIndex(nextIndex);
-    speakQuestion(questions[nextIndex]);
-  };
-
-  const getAIFeedback = async () => {
-    if (isListening) stopListening();
-    if (!transcript) {
-        setFeedback("Please record an answer first.");
-        return;
-    };
-    setIsLoadingFeedback(true);
-    setFeedback('');
-
+  const handleSync = async () => {
+    setMessage('Syncing with email server...');
     try {
-      const response = await fetch('https://neural-nexus-backend-4qh8.onrender.com/interviews/analyze-answer', {
+      const response = await fetch('https://neural-nexus-backend-4qh8.onrender.com/sync-emails', { 
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          question: questions[currentQuestionIndex],
-          answer: transcript,
-        }),
+        credentials: 'include' 
       });
       const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.error || "An error occurred on the server.");
-      }
-      setFeedback(data.feedback);
-   } catch (error: unknown) {
-      console.error("Failed to get AI feedback:", error);
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      setFeedback(`Error: ${errorMessage}. Check the backend terminal for details.`);
-    } finally {
-      setIsLoadingFeedback(false);
+      setMessage(data.message || 'Sync complete!');
+      // Give the webhook a moment to process before refreshing the list
+      setTimeout(fetchInterviews, 2500); 
+    } catch {
+      setMessage('An error occurred during sync.');
     }
   };
+
+  const mostCommonType = getMostCommonType(candidates);
+  // Grab only the first 5 entries for the preview
+  const topCandidates = candidates.slice(0, 5);
 
   return (
     <main className="min-h-screen p-4 sm:p-6 md:p-8">
-      <div className="mx-auto max-w-4xl">
-        <div className="flex items-center justify-between">
+      <div className="mx-auto max-w-7xl">
+        <header className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
           <h1 className="bg-gradient-to-br from-white to-gray-400 bg-clip-text text-3xl font-bold text-transparent">
-            Mock Interview Simulator
+            Command Center
           </h1>
-          <Link href="/dashboard/pipeline" className="rounded-full bg-white/10 px-6 py-2 text-sm font-semibold text-white shadow-md transition-colors hover:bg-white/20">
-            Back to Pipeline
-          </Link>
-        </div>
-        
-        <motion.div className="mt-8 rounded-2xl border border-white/10 bg-black/20 p-6 text-center min-h-[150px] flex flex-col justify-center">
-          {isGenerating ? (
-            <div className="animate-pulse space-y-4">
-              <div className="h-4 bg-white/20 rounded w-1/4 mx-auto"></div>
-              <div className="h-6 bg-cyan-900/50 rounded w-3/4 mx-auto"></div>
-              <p className="text-sm text-cyan-400 mt-2">Generating personalized technical questions...</p>
-            </div>
-          ) : (
-            <>
-              <p className="text-slate-400">Question {currentQuestionIndex + 1} of {questions.length}</p>
-              <p className="mt-2 text-2xl font-semibold text-cyan-300">{questions[currentQuestionIndex]}</p>
-              {(role && role !== "Unknown") && (
-                <span className="mt-4 inline-block px-3 py-1 bg-indigo-500/20 text-indigo-300 text-xs font-medium rounded-full border border-indigo-500/30">
-                  Target: {role} @ {company}
-                </span>
-              )}
-            </>
-          )}
-        </motion.div>
-
-        <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
-          {/* Column 1: Control Buttons */}
-          <div className="flex flex-col space-y-4">
-            <button 
-              onClick={isListening ? stopListening : startListening} 
-              disabled={isGenerating}
-              className={`w-full rounded-full p-4 text-lg font-bold transition-colors duration-200 
-                ${isListening 
-                  ? 'bg-red-600 hover:bg-red-700' 
-                  : 'bg-green-600 hover:bg-green-700'
-                } disabled:opacity-50 disabled:cursor-not-allowed`}
+          <div className="flex flex-wrap items-center gap-3">
+            <motion.button 
+              onClick={handleSync} 
+              className="rounded-full bg-white/10 px-6 py-2 font-semibold text-white shadow-md transition-colors hover:bg-white/20"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
             >
-              {isListening ? 'Stop Recording' : 'Record Answer'}
-            </button>
-            <button 
-              onClick={getAIFeedback} 
-              disabled={isListening || isLoadingFeedback || isGenerating} 
-              className="w-full rounded-full bg-purple-500/80 p-4 text-lg font-semibold transition hover:bg-purple-500/100 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {isLoadingFeedback ? 'Analyzing...' : 'Get AI Feedback'}
-            </button>
-            <div className="flex gap-4">
-              <button 
-                onClick={() => speakQuestion(questions[currentQuestionIndex])} 
-                disabled={isGenerating}
-                className="flex-1 rounded-full bg-white/10 p-3 font-semibold transition hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Repeat Question
-              </button>
-              <button 
-                onClick={handleNextQuestion} 
-                disabled={isGenerating}
-                className="flex-1 rounded-full bg-white/10 p-3 font-semibold transition hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Next Question
-              </button>
-            </div>
-          </div>
-          
-          {/* Column 2: Transcript and AI Feedback */}
-          <div className="flex flex-col space-y-6">
-            <div className="min-h-[250px] rounded-2xl border border-white/10 bg-black/20 p-4 text-slate-300">
-              <p className="font-semibold">Your transcribed answer:</p>
-              <p className="mt-2 text-sm italic">{transcript || 'Your answer will appear here...'}</p>
-            </div>
+              Sync Emails
+            </motion.button>
             
-            {(isLoadingFeedback || feedback) && (
-              <motion.div 
-                className="rounded-2xl border border-white/10 bg-black/20 p-6"
-                initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+            <Link href="/dashboard/pipeline">
+              <motion.button 
+                className="rounded-full bg-indigo-600/80 px-6 py-2 font-semibold text-white shadow-md transition-colors hover:bg-indigo-600/100"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
               >
-                <h2 className="text-xl font-semibold text-cyan-300">AI Feedback 💡</h2>
-                <div className="prose prose-invert mt-2 max-w-none text-slate-300 leading-relaxed">
-                  {isLoadingFeedback ? "Analyzing your answer..." : <div dangerouslySetInnerHTML={{ __html: (feedback || "").replace(/\n/g, '<br />') }} />}
-                </div>
-              </motion.div>
-            )}
+                View Live Pipeline
+              </motion.button>
+            </Link>
+
+            <Link href="/dashboard/practice">
+              <motion.button 
+                className="rounded-full bg-purple-500/80 px-6 py-2 font-semibold text-white shadow-md transition-colors hover:bg-purple-500/100"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                Start Mock Interview
+              </motion.button>
+            </Link>
           </div>
-        </div>
+        </header>
+        
+        {message && <p className="my-4 rounded-md bg-black/20 p-3 text-center text-sm text-cyan-300">{message}</p>}
+
+        <motion.div 
+          className="mt-8 grid grid-cols-1 gap-6 md:grid-cols-3"
+          initial="hidden"
+          animate="visible"
+          variants={{ visible: { transition: { staggerChildren: 0.1 } } }}
+        >
+          {/* Main Timeline Card */}
+          <motion.div 
+            className="rounded-2xl border border-white/10 bg-black/20 p-6 md:col-span-2"
+            variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}
+          >
+            <h2 className="text-xl font-semibold">Interview Timeline</h2>
+            <div className="mt-4 space-y-4">
+              {isLoading ? <p className="text-slate-400">Loading timeline...</p> : candidates.length > 0 ? (
+                <div className="space-y-4">
+                  <AnimatePresence>
+                    {topCandidates.map(candidate => (
+                      <motion.div 
+                        key={candidate.id} 
+                        className="rounded-xl border border-slate-700 bg-slate-800/50 p-4 flex justify-between items-center"
+                        layout
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -20 }}
+                      >
+                        <div>
+                          <h3 className="font-bold">
+                            {candidate.role_title && candidate.role_title !== 'Unknown' ? candidate.role_title : 'Role not specified'} at {candidate.company}
+                          </h3>
+                          <p className="text-sm text-slate-400">{candidate.interview_date} • {candidate.interview_time}</p>
+                        </div>
+                        {candidate.interview_type && candidate.interview_type !== 'Unknown' && (
+                          <span className="inline-block rounded-full bg-cyan-400/10 px-3 py-1 text-xs font-semibold text-cyan-300">
+                            {candidate.interview_type}
+                          </span>
+                        )}
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
+                  
+                  {/* Show More Button */}
+                  <div className="pt-2 text-center">
+                    <Link 
+                      href="/dashboard/pipeline" 
+                      className="inline-block px-6 py-2 rounded-lg bg-white/5 border border-white/10 text-cyan-400 hover:bg-white/10 text-sm font-medium transition-colors"
+                    >
+                      Show More
+                    </Link>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <p className="text-slate-400">No interviews found[cite: 7]. Try syncing your emails.</p>
+                  <Link href="/dashboard/pipeline" className="inline-block text-cyan-400 hover:text-cyan-300 text-sm font-medium transition-colors">
+                    Check the Live Pipeline instead &rarr;[cite: 7]
+                  </Link>
+                </div>
+              )}
+            </div>
+          </motion.div>
+
+          {/* Stats Card */}
+          <motion.div 
+            className="space-y-6"
+            variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}
+          >
+            <div className="rounded-2xl border border-white/10 bg-black/20 p-6">
+                <h2 className="text-xl font-semibold">At a Glance[cite: 7]</h2>
+                <div className="mt-4 space-y-4">
+                  <div>
+                      <p className="text-sm text-gray-400">Total Interviews[cite: 7]</p>
+                      <p className="bg-gradient-to-r from-cyan-300 to-purple-400 bg-clip-text text-3xl font-bold text-transparent">{candidates.length}</p>
+                  </div>
+                  <div>
+                      <p className="text-sm text-gray-400">Most Common Type[cite: 7]</p>
+                      <p className="bg-gradient-to-r from-cyan-300 to-purple-400 bg-clip-text text-3xl font-bold text-transparent">{mostCommonType}</p>
+                  </div>
+                </div>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-black/20 p-6">
+              <h2 className="text-xl font-semibold">AI Insight[cite: 7]</h2>
+              <p className="mt-2 text-sm text-slate-400">
+                Analysis indicates a high concentration of <strong className="text-cyan-300">{mostCommonType}</strong> interviews. Recommend preparing STAR method responses and practicing relevant case studies.[cite: 7]
+              </p>
+            </div>
+          </motion.div>
+        </motion.div>
       </div>
     </main>
   );
