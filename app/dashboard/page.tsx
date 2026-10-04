@@ -97,7 +97,7 @@ export default function DashboardPage() {
               Sync Emails
             </motion.button>
             
-            <Link href="/dashboard/Pipeline">
+            <Link href="/dashboard/pipeline">
               <motion.button 
                 className="rounded-xl bg-indigo-500/10 px-5 py-2.5 text-sm font-medium text-indigo-400 border border-indigo-500/20 shadow-sm transition-all hover:bg-indigo-500/20 hover:text-indigo-300"
                 whileHover={{ scale: 1.02 }}
@@ -193,7 +193,7 @@ export default function DashboardPage() {
                   {candidates.length > 5 && (
                     <div className="pt-4 text-center">
                       <Link 
-                        href="/dashboard/Pipeline" 
+                        href="/dashboard/pipeline" 
                         className="inline-flex items-center gap-2 text-sm font-medium text-slate-400 hover:text-white transition-colors"
                       >
                         View all {candidates.length} records
@@ -209,7 +209,7 @@ export default function DashboardPage() {
                   </div>
                   <h3 className="text-lg font-semibold text-slate-300">No active interviews</h3>
                   <p className="mt-2 text-sm text-slate-500 max-w-sm">We couldn't find any recent interview invites in your inbox. Try syncing your emails or manually checking your pipeline.</p>
-                  <Link href="/dashboard/Pipeline" className="mt-6 inline-flex items-center gap-2 rounded-lg bg-white/10 px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-white/20">
+                  <Link href="/dashboard/pipeline" className="mt-6 inline-flex items-center gap-2 rounded-lg bg-white/10 px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-white/20">
                     Check Full Pipeline
                   </Link>
                 </div>
