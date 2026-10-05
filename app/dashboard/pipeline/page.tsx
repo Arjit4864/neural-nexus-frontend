@@ -61,7 +61,7 @@ export default function PipelineDashboard() {
         
         <div className="flex items-end justify-between">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight text-white mb-2">Recruiter Intelligence</h1>
+            <h1 className="text-3xl font-bold tracking-tight text-white mb-2">Your Opportunities</h1>
             <p className="text-xs text-gray-500">Live sync active • Last updated: {lastUpdated.toLocaleTimeString()}</p>
           </div>
           <Link href="/dashboard" className="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-white text-sm font-medium rounded-lg transition-colors border border-gray-700">
@@ -77,7 +77,7 @@ export default function PipelineDashboard() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="bg-gray-900 border border-gray-800 p-5 rounded-xl shadow-lg">
-            <h3 className="text-sm font-medium text-gray-400">Total Pipeline</h3>
+            <h3 className="text-sm font-medium text-gray-400">Total Interviews</h3>
             <p className="text-3xl font-bold text-white mt-2">{candidates.length}</p>
           </div>
           <div className="bg-gray-900 border border-gray-800 p-5 rounded-xl shadow-lg">
