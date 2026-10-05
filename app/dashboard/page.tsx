@@ -208,7 +208,7 @@ export default function DashboardPage() {
                     <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path></svg>
                   </div>
                   <h3 className="text-lg font-semibold text-slate-300">No active interviews</h3>
-                  <p className="mt-2 text-sm text-slate-500 max-w-sm">We couldn't find any recent interview invites in your inbox. Try syncing your emails or manually checking your opporunity matrix.</p>
+                  <p className="mt-2 text-sm text-slate-500 max-w-sm">We couldn't find any recent interview invites in your inbox. Try syncing your emails or manually checking your opportunities.</p>
                   <Link href="/dashboard/pipeline" className="mt-6 inline-flex items-center gap-2 rounded-lg bg-white/10 px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-white/20">
                     Check Full Opportunities
                   </Link>
