@@ -42,7 +42,7 @@ export default function DashboardPage() {
         }
       }
     } catch (error) {
-      console.error("Error fetching pipeline data:", error);
+      console.error("Error fetching opportunities data:", error);
     } finally {
       setIsLoading(false);
     }
@@ -81,9 +81,9 @@ export default function DashboardPage() {
         <header className="flex flex-col items-start justify-between gap-6 pb-8 border-b border-white/5 md:flex-row md:items-center">
           <div>
             <h1 className="bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-4xl font-extrabold text-transparent tracking-tight">
-              Neural Command
+              Neural Nexus
             </h1>
-            <p className="mt-1 text-sm text-slate-500">Manage your pipeline and prepare for upcoming interviews.</p>
+            <p className="mt-1 text-sm text-slate-500">Manage your opportunities and prepare for upcoming interviews.</p>
           </div>
           
           <div className="flex flex-wrap items-center gap-3">
@@ -103,7 +103,7 @@ export default function DashboardPage() {
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
-                Live Pipeline
+                Opportunities
               </motion.button>
             </Link>
 
@@ -208,9 +208,9 @@ export default function DashboardPage() {
                     <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path></svg>
                   </div>
                   <h3 className="text-lg font-semibold text-slate-300">No active interviews</h3>
-                  <p className="mt-2 text-sm text-slate-500 max-w-sm">We couldn't find any recent interview invites in your inbox. Try syncing your emails or manually checking your pipeline.</p>
+                  <p className="mt-2 text-sm text-slate-500 max-w-sm">We couldn't find any recent interview invites in your inbox. Try syncing your emails or manually checking your opporunity matrix.</p>
                   <Link href="/dashboard/pipeline" className="mt-6 inline-flex items-center gap-2 rounded-lg bg-white/10 px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-white/20">
-                    Check Full Pipeline
+                    Check Full Opportunities
                   </Link>
                 </div>
               )}
@@ -227,7 +227,7 @@ export default function DashboardPage() {
               <div className="absolute top-0 right-0 p-4 opacity-10">
                 <svg className="w-24 h-24 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
               </div>
-              <h2 className="text-lg font-bold text-white mb-6">Pipeline Metrics</h2>
+              <h2 className="text-lg font-bold text-white mb-6">Opportunities</h2>
               <div className="space-y-6 relative z-10">
                 <div>
                   <p className="text-sm font-medium text-slate-400">Total Opportunities</p>
@@ -250,7 +250,7 @@ export default function DashboardPage() {
               </div>
               <h2 className="text-lg font-bold text-white mb-3">AI Intelligence</h2>
               <p className="text-sm leading-relaxed text-slate-300">
-                Your pipeline shows a concentration of <strong className="text-purple-400">{mostCommonType}</strong> interviews. 
+                Your opportunities shows a concentration of <strong className="text-purple-400">{mostCommonType}</strong> interviews. 
                 <br/><br/>
                 Action: We highly recommend running a mock simulator utilizing the STAR method tailored for these specific interaction types to maximize conversion probability.
               </p>
