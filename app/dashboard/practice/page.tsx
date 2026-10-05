@@ -118,7 +118,7 @@ function PracticeSimulator() {
             Mock Interview Simulator
           </h1>
           <Link href="/dashboard/pipeline" className="rounded-full bg-white/10 px-6 py-2 text-sm font-semibold text-white shadow-md transition-colors hover:bg-white/20">
-            Back to Pipeline
+            Back to Opportunities
           </Link>
         </div>
         
